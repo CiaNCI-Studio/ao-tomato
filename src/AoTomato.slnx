@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AoTomato.API/AoTomato.API.csproj" />
+  <Project Path="AoTomato.Services/AoTomato.Services.csproj" />
+  <Project Path="AoTomato.Domain/AoTomato.Domain.csproj" />
+  <Project Path="AoTomato.Repositories/AoTomato.Repositories.csproj" />
+</Solution>

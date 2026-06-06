@@ -1,0 +1,537 @@
+{
+  "info": {
+    "name": "AoTomato",
+    "description": "API Collection for AoTomato",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin\",\n  \"remindMe\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var json = pm.response.json();",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Initial Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/login/initialCheck",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "login", "initialCheck"]
+            }
+          }
+        },
+        {
+          "name": "Initial Setup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"admin\",\n  \"userEmail\": \"admin@admin.com\",\n  \"userPassword\": \"admin\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/login/initialSetup",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "login", "initialSetup"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/user/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "user", "{{id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@email.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "user"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\",\n  \"username\": \"updateduser\",\n  \"email\": \"updated@email.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "user"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/user/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "user", "{{id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "Get Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "settings"]
+            }
+          }
+        },
+        {
+          "name": "Get Setting",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/setting/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "setting", "{{id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Setting",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"myKey\",\n  \"value\": \"myValue\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/setting",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "setting"]
+            }
+          }
+        },
+        {
+          "name": "Update Setting",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\",\n  \"key\": \"myKey\",\n  \"value\": \"updatedValue\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/setting",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "setting"]
+            }
+          }
+        },
+        {
+          "name": "Delete Setting",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/setting/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "setting", "{{id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Functions",
+      "item": [
+        {
+          "name": "Get Functions",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/functions",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "functions"]
+            }
+          }
+        },
+        {
+          "name": "Get Function",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/function/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "function", "{{id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Function",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"MyFunction\",\n  \"description\": \"My function description\",\n  \"route\": \"/my-route\",\n  \"method\": \"Get\",\n  \"code\": \"return 'Hello World';\",\n  \"apiKey\": \"\",\n  \"cron\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/function",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "function"]
+            }
+          }
+        },
+        {
+          "name": "Update Function",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\",\n  \"name\": \"MyFunction\",\n  \"description\": \"Updated description\",\n  \"route\": \"/my-route\",\n  \"method\": \"Post\",\n  \"code\": \"return 'Updated';\",\n  \"apiKey\": \"\",\n  \"cron\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/function",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "function"]
+            }
+          }
+        },
+        {
+          "name": "Delete Function",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/function/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "function", "{{id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ao Functions",
+      "item": [
+        {
+          "name": "Ao GET",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ao/{{routeKey}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["ao", "{{routeKey}}"]
+            }
+          }
+        },
+        {
+          "name": "Ao POST",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ao/{{routeKey}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["ao", "{{routeKey}}"]
+            }
+          }
+        },
+        {
+          "name": "Ao PUT",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ao/{{routeKey}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["ao", "{{routeKey}}"]
+            }
+          }
+        },
+        {
+          "name": "Ao PATCH",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ao/{{routeKey}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["ao", "{{routeKey}}"]
+            }
+          }
+        },
+        {
+          "name": "Ao DELETE",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "x-api-key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ao/{{routeKey}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["ao", "{{routeKey}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Variables",
+      "item": [
+        {
+          "name": "Get Variables",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/variables",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "variables"]
+            }
+          }
+        },
+        {
+          "name": "Get Variable",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/variable/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "variable", "{{id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Variable",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"myKey\",\n  \"value\": \"myValue\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/variable",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "variable"]
+            }
+          }
+        },
+        {
+          "name": "Update Variable",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\",\n  \"key\": \"myKey\",\n  \"value\": \"updatedValue\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/variable",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "variable"]
+            }
+          }
+        },
+        {
+          "name": "Delete Variable",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/variable/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "variable", "{{id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:5001"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "id",
+      "value": ""
+    },
+    {
+      "key": "apiKey",
+      "value": ""
+    },
+    {
+      "key": "routeKey",
+      "value": ""
+    }
+  ]
+}
