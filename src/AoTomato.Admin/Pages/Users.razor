@@ -1,0 +1,235 @@
+@page "/users"
+@inherits PageBase
+
+<MudText Typo="Typo.h4" Class="mb-4">Users</MudText>
+
+<MudButton Variant="Variant.Filled"
+           Color="Color.Primary"
+           StartIcon="@Icons.Material.Filled.Add"
+           OnClick="CreateUser"
+           Class="mb-4"
+           id="btn-add-user">
+    Add User
+</MudButton>
+
+@if (!IsInitialized)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-8 d-flex justify-center" />
+}
+else
+{
+    <MudTable Items="users"
+              Hover="true"
+              Striped="true"
+              Elevation="2"
+              Breakpoint="Breakpoint.Sm"
+              id="table-users">
+        <HeaderContent>
+            <MudTh>Username</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Username">@context.Username</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Primary"
+                               OnClick="@(() => SelectUser(context))"
+                               id="@($"btn-edit-user-{context.Id}")" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="@(() => ConfirmDelete(context))"
+                               id="@($"btn-delete-user-{context.Id}")" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    @if (selectedUser != null)
+    {
+        <MudCard Elevation="2" Class="mt-4 pa-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">
+                    @(isNewUser ? "New User" : $"Edit User: {selectedUser.Username}")
+                </MudText>
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="selectedUser.Username"
+                                      Label="Username"
+                                      Variant="Variant.Outlined"
+                                      Required="true"
+                                      Immediate="true"
+                                      Margin="Margin.Dense"
+                                      id="input-user-username" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="selectedUser.Email"
+                                      Label="Email"
+                                      Variant="Variant.Outlined"
+                                      Required="true"
+                                      Immediate="true"
+                                      Margin="Margin.Dense"
+                                      id="input-user-email" />
+                    </MudItem>
+                    @if (isNewUser)
+                    {
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="password"
+                                          Label="Password"
+                                          Variant="Variant.Outlined"
+                                          InputType="InputType.Password"
+                                          Required="true"
+                                          Immediate="true"
+                                          Margin="Margin.Dense"
+                                          id="input-user-password" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="confirmPassword"
+                                          Label="Confirm Password"
+                                          Variant="Variant.Outlined"
+                                          InputType="InputType.Password"
+                                          Required="true"
+                                          Immediate="true"
+                                          Margin="Margin.Dense"
+                                          id="input-user-confirm-password" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions Class="d-flex justify-end">
+                <MudButton Variant="Variant.Outlined"
+                           OnClick="CancelEdit"
+                           Class="mr-2"
+                           id="btn-cancel-user">
+                    Cancel
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="SaveUser"
+                           Disabled="@isSaving"
+                           id="btn-save-user">
+                    @(isSaving ? "Saving..." : "Save")
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    }
+}
+
+@code {
+    private List<AoTomato.Domain.Users.Dtos.UserDto> users = [];
+    private AoTomato.Domain.Users.Dtos.UserDto? selectedUser;
+    private bool isNewUser;
+    private bool isSaving;
+    private string password = string.Empty;
+    private string confirmPassword = string.Empty;
+
+    protected override async Task LoadDataAsync()
+    {
+        var token = AdminService.Token ?? string.Empty;
+        users = await AdminService.UsersService.GetAll(token);
+    }
+
+    private void CreateUser()
+    {
+        selectedUser = new AoTomato.Domain.Users.Dtos.UserDto();
+        isNewUser = true;
+        password = string.Empty;
+        confirmPassword = string.Empty;
+        StateHasChanged();
+    }
+
+    private void SelectUser(AoTomato.Domain.Users.Dtos.UserDto user)
+    {
+        selectedUser = user;
+        isNewUser = false;
+        password = string.Empty;
+        confirmPassword = string.Empty;
+        StateHasChanged();
+    }
+
+    private void CancelEdit()
+    {
+        selectedUser = null;
+        isNewUser = false;
+        password = string.Empty;
+        confirmPassword = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task SaveUser()
+    {
+        if (selectedUser == null) return;
+
+        if (isNewUser && password != confirmPassword)
+        {
+            ShowError("Passwords do not match.");
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            var token = AdminService.Token ?? string.Empty;
+
+            if (isNewUser)
+            {
+                var setupDto = new AoTomato.Domain.Login.Dtos.InitialSetupDto
+                {
+                    UserName = selectedUser.Username,
+                    UserEmail = selectedUser.Email,
+                    UserPassword = password
+                };
+                await AdminService.InitialSetupAsync(setupDto);
+            }
+            else
+            {
+                var result = await AdminService.UsersService.Save(selectedUser, false, token);
+                if (result == null)
+                {
+                    ShowError("Failed to save user.");
+                    return;
+                }
+            }
+
+            ShowSuccess(isNewUser ? "User created successfully." : "User updated successfully.");
+            selectedUser = null;
+            isNewUser = false;
+            users = await AdminService.UsersService.GetAll(token);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await HandleUnauthorizedAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task ConfirmDelete(AoTomato.Domain.Users.Dtos.UserDto user)
+    {
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, $"Are you sure you want to delete user '{user.Username}'?" }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialogRef = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result?.Canceled == false)
+        {
+            await ExecuteWithErrorHandlingAsync(async () =>
+            {
+                var token = AdminService.Token ?? string.Empty;
+                await AdminService.UsersService.Delete(user.Id, token);
+                ShowSuccess("User deleted successfully.");
+                users = await AdminService.UsersService.GetAll(token);
+            });
+        }
+    }
+}

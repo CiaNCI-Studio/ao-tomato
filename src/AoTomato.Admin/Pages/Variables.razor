@@ -1,0 +1,153 @@
+@page "/variables"
+@inherits PageBase
+
+<MudText Typo="Typo.h4" Class="mb-4">Variables</MudText>
+
+<MudButton Variant="Variant.Filled"
+           Color="Color.Primary"
+           StartIcon="@Icons.Material.Filled.Add"
+           OnClick="OpenAddDialog"
+           Class="mb-4"
+           id="btn-add-variable">
+    Add Variable
+</MudButton>
+
+@if (!IsInitialized)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-8 d-flex justify-center" />
+}
+else
+{
+    <MudTable Items="variables"
+              Hover="true"
+              Striped="true"
+              Elevation="2"
+              Breakpoint="Breakpoint.Sm"
+              id="table-variables">
+        <HeaderContent>
+            <MudTh>Key</MudTh>
+            <MudTh>Value</MudTh>
+            <MudTh>Read Only</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Key">@context.Key</MudTd>
+            <MudTd DataLabel="Value">
+                <MudTextField @bind-Value="context.Value"
+                              Variant="Variant.Text"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.ContentCopy"
+                              OnAdornmentClick="@(() => CopyToClipboard(context.Value))"
+                              ReadOnly="context.ReadOnly"
+                              Immediate="true"
+                              id="@($"input-var-value-{context.Id}")" />
+            </MudTd>
+            <MudTd DataLabel="Read Only">
+                <MudCheckBox Checked="context.ReadOnly" ReadOnly="true" Disabled="true" T="bool" />
+            </MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Primary"
+                               OnClick="@(() => OpenEditDialog(context))"
+                               id="@($"btn-edit-var-{context.Id}")" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="@(() => ConfirmDelete(context))"
+                               id="@($"btn-delete-var-{context.Id}")" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<AoTomato.Domain.Variables.Dtos.VariableDto> variables = [];
+
+    protected override async Task LoadDataAsync()
+    {
+        var token = AdminService.Token ?? string.Empty;
+        variables = await AdminService.VariablesService.GetAll(token);
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters<VariableDialog>
+        {
+            { x => x.VariableDto, new AoTomato.Domain.Variables.Dtos.VariableDto() },
+            { x => x.IsNew, true }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialogRef = await DialogService.ShowAsync<VariableDialog>("Add Variable", parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result?.Canceled == false && result?.Data is AoTomato.Domain.Variables.Dtos.VariableDto dto)
+        {
+            await SaveVariableAsync(dto, true);
+        }
+    }
+
+    private async Task OpenEditDialog(AoTomato.Domain.Variables.Dtos.VariableDto variable)
+    {
+        var parameters = new DialogParameters<VariableDialog>
+        {
+            { x => x.VariableDto, variable },
+            { x => x.IsNew, false }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialogRef = await DialogService.ShowAsync<VariableDialog>("Edit Variable", parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result?.Canceled == false && result?.Data is AoTomato.Domain.Variables.Dtos.VariableDto dto)
+        {
+            await SaveVariableAsync(dto, false);
+        }
+    }
+
+    private async Task SaveVariableAsync(AoTomato.Domain.Variables.Dtos.VariableDto dto, bool isNew)
+    {
+        await ExecuteWithErrorHandlingAsync(async () =>
+        {
+            var token = AdminService.Token ?? string.Empty;
+            var result = await AdminService.VariablesService.Save(dto, isNew, token);
+            if (result != null)
+            {
+                ShowSuccess(isNew ? "Variable added successfully." : "Variable updated successfully.");
+                var token2 = AdminService.Token ?? string.Empty;
+                variables = await AdminService.VariablesService.GetAll(token2);
+            }
+            else
+            {
+                ShowError("Failed to save variable.");
+            }
+        });
+    }
+
+    private async Task ConfirmDelete(AoTomato.Domain.Variables.Dtos.VariableDto variable)
+    {
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, $"Are you sure you want to delete the variable '{variable.Key}'?" }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialogRef = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result?.Canceled == false)
+        {
+            await ExecuteWithErrorHandlingAsync(async () =>
+            {
+                var token = AdminService.Token ?? string.Empty;
+                await AdminService.VariablesService.Delete(variable.Id, token);
+                ShowSuccess("Variable deleted successfully.");
+                variables = await AdminService.VariablesService.GetAll(token);
+            });
+        }
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+}

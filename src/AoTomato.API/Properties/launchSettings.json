@@ -3,6 +3,7 @@
   "profiles": {
     "http": {
       "commandName": "Project",
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
       "dotnetRunMessages": true,
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5142",
@@ -13,6 +14,7 @@
     },
     "https": {
       "commandName": "Project",
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
       "dotnetRunMessages": true,
       "launchBrowser": false,
       "applicationUrl": "https://localhost:7092;http://localhost:5142",

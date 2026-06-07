@@ -1,0 +1,71 @@
+@inject IJSRuntime JsRuntime
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="isFormValid">
+            <MudTextField @bind-Value="variableDto.Key"
+                          Label="Key"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          Immediate="true"
+                          Margin="Margin.Dense"
+                          id="input-variable-dialog-key" />
+            <MudTextField @bind-Value="variableDto.Value"
+                          Label="Value"
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          Margin="Margin.Dense"
+                          id="input-variable-dialog-value" />
+            <MudSwitch @bind-Checked="variableDto.ReadOnly"
+                       Label="Read Only"
+                       Color="Color.Primary"
+                       T="bool"
+                       id="switch-variable-dialog-readonly" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" id="btn-variable-dialog-cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="Submit"
+                   id="btn-variable-dialog-submit">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public AoTomato.Domain.Variables.Dtos.VariableDto VariableDto { get; set; } = new();
+
+    [Parameter]
+    public bool IsNew { get; set; } = true;
+
+    private MudForm? form;
+    private bool isFormValid;
+    private AoTomato.Domain.Variables.Dtos.VariableDto variableDto = new();
+
+    protected override void OnInitialized()
+    {
+        variableDto = new AoTomato.Domain.Variables.Dtos.VariableDto
+        {
+            Id = VariableDto.Id,
+            Key = VariableDto.Key,
+            Value = VariableDto.Value,
+            ReadOnly = VariableDto.ReadOnly
+        };
+    }
+
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(variableDto));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

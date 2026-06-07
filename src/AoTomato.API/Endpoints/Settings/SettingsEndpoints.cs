@@ -1,4 +1,5 @@
 using AoTomato.API.Extensions;
+using AoTomato.Domain.Common.Dtos;
 using AoTomato.Domain.Settings.Abstractions.Services;
 using AoTomato.Domain.Settings.Dtos;
 using Microsoft.AspNetCore.Mvc;
@@ -14,12 +15,12 @@ public static class SettingsEndpoints
             var loggedUser = context.GetLoggedUser();
             if (loggedUser == null) return Results.Unauthorized();
             var settings = await service.GetAllAsync(loggedUser);
-            return Results.Ok(settings);   
+            return Results.Ok(Response<List<SettingDto>>.Ok(settings));   
         })
         .WithName("GetSettings")
         .WithDescription("Get settings")
         .WithTags("Settings")
-        .Produces<List<SettingDto>>();  
+        .Produces<Response<List<SettingDto>>>();  
 
         app.MapGet("v1/setting/{id}", async (HttpContext context, [FromServices] ISettingsService service, string id) =>
         {
@@ -27,12 +28,12 @@ public static class SettingsEndpoints
             if (loggedUser == null) return Results.Unauthorized();
             var target = await service.GetByIdAsync(id, loggedUser);
             if (target == null) return Results.NotFound();
-            return Results.Ok(target);
+            return Results.Ok(Response<SettingDto>.Ok(target));
         })
         .WithName("GetSetting")
         .WithDescription("Get setting by id")
         .WithTags("Settings")
-        .Produces<SettingDto>();  
+        .Produces<Response<SettingDto>>();  
 
         app.MapPut("v1/setting", async (HttpContext context, [FromServices] ISettingsService service, [FromBody] SettingDto dto) =>
         {
@@ -40,12 +41,12 @@ public static class SettingsEndpoints
             if (loggedUser == null) return Results.Unauthorized();
             var target = await service.UpdateAsync(dto, loggedUser);
             if (target == null) return Results.NotFound();
-            return Results.Ok(target);
+            return Results.Ok(Response<SettingDto>.Ok(target));
         })
         .WithName("UpdateSetting")
         .WithDescription("Update setting")
         .WithTags("Settings")
-        .Produces<SettingDto>();  
+        .Produces<Response<SettingDto>>();  
 
         app.MapPost("v1/setting", async (HttpContext context, [FromServices] ISettingsService service, [FromBody] SettingDto dto) =>
         {
@@ -53,23 +54,24 @@ public static class SettingsEndpoints
             if (loggedUser == null) return Results.Unauthorized();
             var target = await service.CreateAsync(dto, loggedUser);
             if (target == null) return Results.BadRequest();
-            return Results.Ok(target);
+            return Results.Ok(Response<SettingDto>.Ok(target));
         })
         .WithName("CreateSetting")
         .WithDescription("Create setting")
         .WithTags("Settings")
-        .Produces<SettingDto>();  
+        .Produces<Response<SettingDto>>();  
 
         app.MapDelete("v1/setting/{id}", async (HttpContext context, [FromServices] ISettingsService service, string id) =>
         {
             var loggedUser = context.GetLoggedUser();
             if (loggedUser == null) return Results.Unauthorized();
             await service.DeleteAsync(id, loggedUser);
-            return Results.Ok();
+            return Results.Ok(Response<bool>.Ok(true));
         })
         .WithName("DeleteSetting")
         .WithDescription("Delete setting")
-        .WithTags("Settings");  
+        .WithTags("Settings")
+        .Produces<Response<bool>>();  
 
         return app;
     }

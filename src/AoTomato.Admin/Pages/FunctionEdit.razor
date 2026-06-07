@@ -1,0 +1,334 @@
+@page "/functions/edit/{Id?}"
+@inherits PageBase
+
+<MudText Typo="Typo.h4" Class="mb-4">@(isNew ? "Create Function" : "Edit Function")</MudText>
+
+@if (!IsInitialized)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-8 d-flex justify-center" />
+}
+else
+{
+    <MudCard Elevation="2" Class="pa-4">
+        <MudCardContent>
+            <MudForm @ref="form" @bind-IsValid="isFormValid">
+                <MudTextField @bind-Value="functionDto.Name"
+                              Label="Name"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              Immediate="true"
+                              Margin="Margin.Dense"
+                              id="input-function-name" />
+                <MudTextField @bind-Value="functionDto.Description"
+                              Label="Description"
+                              Variant="Variant.Outlined"
+                              Lines="3"
+                              Margin="Margin.Dense"
+                              id="input-function-description" />
+                <MudTextField @bind-Value="functionDto.Route"
+                              Label="Route"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              Immediate="true"
+                              Margin="Margin.Dense"
+                              id="input-function-route" />
+                <MudSelect @bind-Value="functionDto.Method"
+                           Label="Method"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           id="input-function-method">
+                    <MudSelectItem Value="@AoTomato.Domain.Functions.Enums.FunctionMethods.Get">GET</MudSelectItem>
+                    <MudSelectItem Value="@AoTomato.Domain.Functions.Enums.FunctionMethods.Post">POST</MudSelectItem>
+                    <MudSelectItem Value="@AoTomato.Domain.Functions.Enums.FunctionMethods.Put">PUT</MudSelectItem>
+                    <MudSelectItem Value="@AoTomato.Domain.Functions.Enums.FunctionMethods.Delete">DELETE</MudSelectItem>
+                    <MudSelectItem Value="@AoTomato.Domain.Functions.Enums.FunctionMethods.Patch">PATCH</MudSelectItem>
+                </MudSelect>
+                <MudTextField @bind-Value="functionDto.ApiKey"
+                              Label="API Key"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              id="input-function-apikey" />
+                <MudTextField @bind-Value="functionDto.Cron"
+                              Label="Cron Expression"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              id="input-function-cron" />
+            </MudForm>
+
+            <MudText Typo="Typo.h6" Class="mt-4 mb-2">Code</MudText>
+            <div style="height: 500px; border: 1px solid var(--mud-palette-lines-default); border-radius: 4px;">
+                <StandaloneCodeEditor @ref="editor"
+                                      ConstructionOptions="ConstructionOptions"
+                                      id="editor-function-code" />
+            </div>
+
+            <MudExpansionPanels Class="mt-4">
+                <MudExpansionPanel Text="Reference Guide">
+                    <MudText Typo="Typo.h6" Class="mb-2">Lua Function Implementation Guide</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-4">
+                        Your Lua code runs within a sandboxed environment. Use the following APIs to interact with the system.
+                    </MudText>
+
+                    <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold">Response</MudText>
+                    <MudPaper Class="pa-3 mb-4" Elevation="1">
+                        <pre><code class="language-lua">
+-- Set the HTTP status code
+response.status = 200
+
+-- Set the response body (string or JSON string)
+response.body = '{"message": "Hello World"}'
+
+-- Set response headers
+response.headers["Content-Type"] = "application/json"
+response.headers["X-Custom-Header"] = "value"
+                        </code></pre>
+                    </MudPaper>
+
+                    <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold">Context (ctx)</MudText>
+                    <MudPaper Class="pa-3 mb-4" Elevation="1">
+                        <pre><code class="language-lua">
+-- Get the HTTP method of the current request
+local method = ctx.method  -- e.g., "GET", "POST"
+
+-- Access request headers
+local auth = headers["Authorization"]
+
+-- Access query parameters
+local page = queryParameters["page"]
+
+-- Access request body (as Lua table if JSON, or nil)
+if body ~= nil then
+    local name = body["name"]
+end
+                        </code></pre>
+                    </MudPaper>
+
+                    <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold">HTTP Requests</MudText>
+                    <MudPaper Class="pa-3 mb-4" Elevation="1">
+                        <pre><code class="language-lua">
+-- Make an HTTP request
+local result = http.request({
+    method = "GET",
+    url = "https://api.example.com/data",
+    headers = {
+        ["Content-Type"] = "application/json"
+    }
+})
+
+-- Result contains: status, body, headers
+local status = result.status
+local body = result.body
+local responseHeaders = result.headers
+                        </code></pre>
+                    </MudPaper>
+
+                    <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold">JSON Handling</MudText>
+                    <MudPaper Class="pa-3 mb-4" Elevation="1">
+                        <pre><code class="language-lua">
+-- Parse a JSON string into a Lua table
+local parsed = json.parse('{"key": "value"}')
+
+-- Convert a Lua table to a JSON string
+local jsonStr = json.stringify({ key = "value" })
+                        </code></pre>
+                    </MudPaper>
+
+                    <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold">Variables</MudText>
+                    <MudPaper Class="pa-3 mb-4" Elevation="1">
+                        <pre><code class="language-lua">
+-- Get a variable value by key
+local value = variables.get("my_variable_key")
+
+-- Set a variable value
+local success = variables.set({
+    key = "my_variable_key",
+    value = "new value"
+})
+                        </code></pre>
+                    </MudPaper>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudCardContent>
+        <MudCardActions Class="d-flex justify-space-between">
+            <div>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Secondary"
+                           OnClick="CopyFunctionUrl"
+                           StartIcon="@Icons.Material.Filled.ContentCopy"
+                           Disabled="@isNew"
+                           Class="mr-2"
+                           id="btn-copy-function-url">
+                    Copy URL
+                </MudButton>
+                @if (!isNew)
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               OnClick="OpenDeleteDialog"
+                               StartIcon="@Icons.Material.Filled.Delete"
+                               id="btn-delete-function">
+                        Delete
+                    </MudButton>
+                }
+            </div>
+            <div>
+                <MudButton Variant="Variant.Outlined"
+                           OnClick="Cancel"
+                           Class="mr-2"
+                           id="btn-cancel-function">
+                    Cancel
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="SaveFunction"
+                           Disabled="@isSaving"
+                           id="btn-save-function">
+                    @(isSaving ? "Saving..." : "Save")
+                </MudButton>
+            </div>
+        </MudCardActions>
+    </MudCard>
+}
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private MudForm? form;
+    private StandaloneCodeEditor? editor;
+    private AoTomato.domain.Functions.Dtos.FunctionDto functionDto = new();
+    private bool isNew = true;
+    private bool isFormValid;
+    private bool isSaving;
+
+    private Func<StandaloneCodeEditor, StandaloneEditorConstructionOptions> ConstructionOptions => editor =>
+        new StandaloneEditorConstructionOptions
+        {
+            Language = "lua",
+            Theme = "vs-dark",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            ScrollBeyondLastLine = false,
+            LineNumbers = "on",
+            TabSize = 2,
+            FontSize = 14,
+            GlyphMargin = true,
+            Value = functionDto.Code,
+        };
+
+    protected override async Task LoadDataAsync()
+    {
+        if (!string.IsNullOrEmpty(Id))
+        {
+            isNew = false;
+            var token = AdminService.Token ?? string.Empty;
+            var func = await AdminService.FunctionsService.GetById(Id, token);
+            if (func != null)
+            {
+                functionDto = func;
+            }
+            else
+            {
+                ShowError("Function not found.");
+                NavigationManager.NavigateTo("/functions");
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(200);
+            await JsRuntime.InvokeVoidAsync("eval", "window.dispatchEvent(new Event('resize'));");
+        }
+    }
+
+    private async Task SaveFunction()
+    {
+        isSaving = true;
+        try
+        {
+            if (editor != null)
+            {
+                functionDto.Code = await editor.GetValue();
+            }
+
+            var token = AdminService.Token ?? string.Empty;
+            var result = await AdminService.FunctionsService.Save(functionDto, isNew, token);
+            if (result != null)
+            {
+                ShowSuccess(isNew ? "Function created successfully." : "Function updated successfully.");
+                NavigationManager.NavigateTo("/functions");
+            }
+            else
+            {
+                ShowError("Failed to save function.");
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await HandleUnauthorizedAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task OpenDeleteDialog()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, "Are you sure you want to delete this function?" }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialogRef = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result?.Canceled == false)
+        {
+            await DeleteFunction();
+        }
+    }
+
+    private async Task DeleteFunction()
+    {
+        try
+        {
+            var token = AdminService.Token ?? string.Empty;
+            await AdminService.FunctionsService.Delete(functionDto.Id, token);
+            ShowSuccess("Function deleted successfully.");
+            NavigationManager.NavigateTo("/functions");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await HandleUnauthorizedAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private async Task CopyFunctionUrl()
+    {
+        var url = $"{NavigationManager.BaseUri}ao/{functionDto.Route}";
+        if (!string.IsNullOrEmpty(functionDto.ApiKey))
+        {
+            url += $"?api_key={functionDto.ApiKey}";
+        }
+        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", url);
+        ShowSuccess("Function URL copied to clipboard.");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/functions");
+    }
+}

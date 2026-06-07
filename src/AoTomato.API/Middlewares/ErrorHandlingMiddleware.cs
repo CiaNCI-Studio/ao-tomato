@@ -24,7 +24,7 @@ public class ErrorHandlingMiddleware
             context.Response.StatusCode = 404;
             context.Response.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(ex.Message));
         }
-        catch (DuplicatedParameterException ex)
+        catch (DuplicatedException ex)
         {
             Log.Logger.Warning("Duplicated parameter: {message}", ex.Message, ex);
             context.Response.StatusCode = 409;

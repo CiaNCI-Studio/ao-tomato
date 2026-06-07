@@ -1,0 +1,84 @@
+@page "/"
+@page "/Functions"
+@inherits PageBase
+
+<MudText Typo="Typo.h4" Class="mb-4">Functions</MudText>
+
+<MudButton Variant="Variant.Filled"
+           Color="Color.Primary"
+           StartIcon="@Icons.Material.Filled.Add"
+           OnClick="CreateFunction"
+           Class="mb-4"
+           id="btn-create-function">
+    Create Function
+</MudButton>
+
+<MudGrid>
+    @foreach (var func in functions)
+    {
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudCard Elevation="2" Class="cursor-pointer" id="@($"card-function-{func.Id}")">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-2">@func.Name</MudText>
+                    <MudText Typo="Typo.body2" Class="text-secondary">@func.Description</MudText>
+                    <MudChip Class="mt-2" Size="Size.Small" Color="Color.Info" T="string">@func.Route</MudChip>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => EditFunction(func.Id))"
+                                   id="@($"btn-edit-{func.Id}")" />
+                    <MudTooltip Text="Copy function URL">
+                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                       Color="Color.Secondary"
+                                       OnClick="@(() => CopyFunctionUrl(func))"
+                                       id="@($"btn-copy-{func.Id}")" />
+                    </MudTooltip>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+@if (!functions.Any() && IsInitialized)
+{
+    <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-8 text-secondary">
+        No functions found. Click "Create Function" to add one.
+    </MudText>
+}
+
+@if (!IsInitialized)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-8 d-flex justify-center" />
+}
+
+@code {
+    private List<AoTomato.domain.Functions.Dtos.FunctionDto> functions = [];
+
+    protected override async Task LoadDataAsync()
+    {
+        var token = AdminService.Token ?? string.Empty;
+        functions = await AdminService.FunctionsService.GetAll(token);
+    }
+
+    private void CreateFunction()
+    {
+        NavigationManager.NavigateTo("/functions/edit");
+    }
+
+    private void EditFunction(string id)
+    {
+        NavigationManager.NavigateTo($"/functions/edit/{id}");
+    }
+
+    private async Task CopyFunctionUrl(AoTomato.domain.Functions.Dtos.FunctionDto func)
+    {
+        var url = $"{NavigationManager.BaseUri}ao/{func.Route}";
+        if (!string.IsNullOrEmpty(func.ApiKey))
+        {
+            url += $"?api_key={func.ApiKey}";
+        }
+        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", url);
+        ShowSuccess("Function URL copied to clipboard.");
+    }
+}

@@ -1,0 +1,83 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@((e) => DrawerToggle())"
+                       Class="d-lg-none" />
+        <div class="d-flex align-center" style="min-width: 180px; height: 40px;">
+            <MudImage Src="images/logo_full.svg" class="AoLogo" />
+        </div>
+        <MudSpacer />
+        <MudHidden Breakpoint="Breakpoint.MdAndDown">
+            <div class="d-flex align-center">
+                <MudNavLink Href="/" Match="NavLinkMatch.All">Functions</MudNavLink>
+                <MudNavLink Href="/variables" Match="NavLinkMatch.All">Variables</MudNavLink>
+                <MudNavLink Href="/users" Match="NavLinkMatch.All">Users</MudNavLink>
+            </div>
+        </MudHidden>
+        @if (IsLoggedIn)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Logout"
+                           Color="Color.Inherit"
+                           OnClick="LogoutAsync"
+                           id="btn-logout" />
+        }
+    </MudAppBar>
+    <MudDrawer @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Breakpoint="Breakpoint.Lg">
+        <MudNavMenu>
+            <MudText Typo="Typo.h6" Class="pa-4">AoTomato</MudText>
+            <MudDivider Class="mb-2" />
+            <MudNavLink Href="/functions" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Code">Functions</MudNavLink>
+            <MudNavLink Href="/variables" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.DataObject">Variables</MudNavLink>
+            <MudNavLink Href="/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.People">Users</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8 pt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    [Inject]
+    private IAdminService AdminService { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private bool drawerOpen;
+
+    private bool IsLoggedIn => AdminService.IsLoggedIn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AdminService.Updated += (_, _) => StateHasChanged();
+        if(!await AdminService.InitialCheckAsync())
+        {
+            await AdminService.CheckLoginAsync();
+        }else
+        {
+            NavigationManager.NavigateTo("/initial-setup");
+        }
+    }
+
+    private void DrawerToggle()
+    {
+        drawerOpen = !drawerOpen;
+    }
+
+    private async Task LogoutAsync()
+    {
+        await AdminService.LogoutAsync();
+        NavigationManager.NavigateTo("/login");
+    }
+}
