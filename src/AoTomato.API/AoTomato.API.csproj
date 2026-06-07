@@ -19,23 +19,6 @@
     <ProjectReference Include="../AoTomato.Services/AoTomato.Services.csproj" />
   </ItemGroup>
 
-  <Target Name="CopyBlazorWasmOutput" AfterTargets="AfterBuild">
-    <PropertyGroup>
-      <AdminOutputPath>$(MSBuildProjectDirectory)\..\AoTomato.Admin\bin\$(Configuration)\net10.0\wwwroot</AdminOutputPath>
-    </PropertyGroup>
-    <RemoveDir Directories="$(OutputPath)wwwroot\_framework" />
-    <ItemGroup>
-      <BlazorWasmFiles Include="$(AdminOutputPath)\_framework\**\*" />
-      <BlazorWasmIndex Include="$(MSBuildProjectDirectory)\..\AoTomato.Admin\wwwroot\index.html" />
-    </ItemGroup>
-    <Copy SourceFiles="@(BlazorWasmFiles)"
-          DestinationFolder="$(OutputPath)wwwroot\_framework\%(RecursiveDir)"
-          SkipUnchangedFiles="false"
-          OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="@(BlazorWasmIndex)"
-          DestinationFolder="$(OutputPath)wwwroot\"
-          SkipUnchangedFiles="false"
-          OverwriteReadOnlyFiles="true" />
-  </Target>
+
 
 </Project>
