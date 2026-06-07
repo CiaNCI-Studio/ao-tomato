@@ -1,0 +1,18 @@
+services:
+  aotomato:
+    image: ciancistudio/aotomato:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7071:7071"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DbSettings__ConnectionString=/data/aotomato.db
+    volumes:
+      - aotomato-data:/data
+    restart: unless-stopped
+
+volumes:
+  aotomato-data:
+    driver: local
