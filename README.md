@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo_full.png" alt="Ao-Tomato" width="500">
+  <img src="docs/logo_full_white.png" alt="Ao-Tomato" width="500">
 </p>
 
 ---
