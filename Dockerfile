@@ -9,6 +9,8 @@ RUN dotnet publish AoTomato.API/AoTomato.API.csproj -c Release -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+COPY --from=build /app ./
+
 ENV ASPNETCORE_URLS=http://+:7071
 ENV DbSettings__ConnectionString=/data/aotomato.db
 
