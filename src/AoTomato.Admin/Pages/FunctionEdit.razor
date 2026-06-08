@@ -146,6 +146,18 @@ local success = variables.set({
 })
                         </code></pre>
                     </MudPaper>
+
+                    <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold">Logging</MudText>
+                    <MudPaper Class="pa-3 mb-4" Elevation="1">
+                        <pre><code class="language-lua">
+-- Write a custom log entry during function execution
+-- Logs are automatically created at start, finish and on errors
+log.write({
+    message = "Processing user data",
+    body = "{\"userId\": 123}"
+})
+                        </code></pre>
+                    </MudPaper>
                 </MudExpansionPanel>
             </MudExpansionPanels>
         </MudCardContent>
@@ -162,6 +174,14 @@ local success = variables.set({
                 </MudButton>
                 @if (!isNew)
                 {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Info"
+                               OnClick="ViewLogs"
+                               StartIcon="@Icons.Material.Filled.History"
+                               Class="mr-2"
+                               id="btn-view-logs">
+                        Logs
+                    </MudButton>
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Error"
                                OnClick="OpenDeleteDialog"
@@ -314,6 +334,11 @@ local success = variables.set({
         {
             ShowError(ex.Message);
         }
+    }
+
+    private void ViewLogs()
+    {
+        NavigationManager.NavigateTo($"/functionlogs/{Id}");
     }
 
     private async Task CopyFunctionUrl()

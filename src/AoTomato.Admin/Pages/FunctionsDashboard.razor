@@ -28,6 +28,12 @@
                                    Color="Color.Primary"
                                    OnClick="@(() => EditFunction(func.Id))"
                                    id="@($"btn-edit-{func.Id}")" />
+                    <MudTooltip Text="View logs">
+                        <MudIconButton Icon="@Icons.Material.Filled.History"
+                                       Color="Color.Info"
+                                       OnClick="@(() => ViewLogs(func.Id))"
+                                       id="@($"btn-logs-{func.Id}")" />
+                    </MudTooltip>
                     <MudTooltip Text="Copy function URL">
                         <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
                                        Color="Color.Secondary"
@@ -69,6 +75,11 @@
     private void EditFunction(string id)
     {
         NavigationManager.NavigateTo($"/functions/edit/{id}");
+    }
+
+    private void ViewLogs(string id)
+    {
+        NavigationManager.NavigateTo($"/functionlogs/{id}");
     }
 
     private async Task CopyFunctionUrl(AoTomato.domain.Functions.Dtos.FunctionDto func)

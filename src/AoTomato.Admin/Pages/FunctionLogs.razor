@@ -1,0 +1,252 @@
+@page "/functionlogs/{FunctionId}"
+@inherits PageBase
+
+<MudText Typo="Typo.h4" Class="mb-2">Function Logs</MudText>
+<MudText Typo="Typo.subtitle1" Class="mb-4 text-secondary">@functionName</MudText>
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="executionFilter"
+                      Label="Filter by Execution ID"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Immediate="true"
+                      id="input-execution-filter" />
+    </MudItem>
+    <MudItem xs="12" sm="6" Class="d-flex align-center">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="ApplyFilter"
+                   Class="mr-2"
+                   id="btn-apply-filter">
+            Apply Filter
+        </MudButton>
+        <MudButton Variant="Variant.Outlined"
+                   OnClick="ClearFilter"
+                   Class="mr-2"
+                   id="btn-clear-filter">
+            Clear
+        </MudButton>
+        <MudSpacer />
+        @if (!string.IsNullOrEmpty(executionFilter))
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       OnClick="DeleteExecutionLogs"
+                       StartIcon="@Icons.Material.Filled.Delete"
+                       id="btn-delete-execution-logs">
+                Delete This Execution
+            </MudButton>
+        }
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Error"
+                   OnClick="DeleteAllLogs"
+                   StartIcon="@Icons.Material.Filled.Delete"
+                   Class="ml-2"
+                   id="btn-delete-all-logs">
+            Delete All Logs
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+@if (!IsInitialized)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mt-8 d-flex justify-center" />
+}
+else if (!logs.Any())
+{
+    <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-8 text-secondary">
+        No logs found for this function.
+    </MudText>
+}
+else
+{
+    <MudTable Items="logs"
+              Hover="true"
+              Striped="true"
+              Elevation="2"
+              Breakpoint="Breakpoint.Sm"
+              @bind-SelectedItem="selectedLog"
+              id="table-function-logs">
+        <HeaderContent>
+            <MudTh>Execution ID</MudTh>
+            <MudTh>Message</MudTh>
+            <MudTh>Date</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Execution ID">@context.ExecutionId</MudTd>
+            <MudTd DataLabel="Message">@context.Message</MudTd>
+            <MudTd DataLabel="Date">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.FilterList"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               OnClick="@(() => FilterByExecution(context.ExecutionId))"
+                               id="@($"btn-filter-execution-{context.Id}")"
+                               Title="Show only this execution" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    @if (selectedLog != null)
+    {
+        <MudCard Elevation="2" Class="mt-4 pa-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">Log Details</MudText>
+                <MudText Typo="Typo.subtitle2" Class="mb-1 font-weight-bold">Execution ID</MudText>
+                <MudText Typo="Typo.body2" Class="mb-3">@selectedLog.ExecutionId</MudText>
+
+                <MudText Typo="Typo.subtitle2" Class="mb-1 font-weight-bold">Message</MudText>
+                <MudText Typo="Typo.body2" Class="mb-3">@selectedLog.Message</MudText>
+
+                <MudText Typo="Typo.subtitle2" Class="mb-1 font-weight-bold">Date</MudText>
+                <MudText Typo="Typo.body2" Class="mb-3">@selectedLog.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</MudText>
+
+                <MudText Typo="Typo.subtitle2" Class="mb-1 font-weight-bold">Body</MudText>
+                <MudPaper Elevation="1" Class="pa-3 mb-3" Style="max-height:200px;overflow-y:auto;">
+                    <pre><code>@(string.IsNullOrEmpty(selectedLog.Body) ? "(empty)" : selectedLog.Body)</code></pre>
+                </MudPaper>
+
+                <MudText Typo="Typo.subtitle2" Class="mb-1 font-weight-bold">Headers</MudText>
+                <MudPaper Elevation="1" Class="pa-3 mb-3" Style="max-height:200px;overflow-y:auto;">
+                    <pre><code>@(string.IsNullOrEmpty(selectedLog.Headers) ? "(empty)" : selectedLog.Headers)</code></pre>
+                </MudPaper>
+
+                <MudText Typo="Typo.subtitle2" Class="mb-1 font-weight-bold">Query Parameters</MudText>
+                <MudPaper Elevation="1" Class="pa-3 mb-3" Style="max-height:200px;overflow-y:auto;">
+                    <pre><code>@(string.IsNullOrEmpty(selectedLog.QueryParameters) ? "(empty)" : selectedLog.QueryParameters)</code></pre>
+                </MudPaper>
+
+                <MudText Typo="Typo.subtitle2" Class="mb-1 font-weight-bold">Result</MudText>
+                <MudPaper Elevation="1" Class="pa-3" Style="max-height:200px;overflow-y:auto;">
+                    <pre><code>@(string.IsNullOrEmpty(selectedLog.Result) ? "(empty)" : selectedLog.Result)</code></pre>
+                </MudPaper>
+            </MudCardContent>
+        </MudCard>
+    }
+}
+
+@code {
+    [Parameter]
+    public string FunctionId { get; set; } = string.Empty;
+
+    private List<AoTomato.domain.FunctionLogs.Dtos.FunctionLogDto> logs = [];
+    private AoTomato.domain.FunctionLogs.Dtos.FunctionLogDto? selectedLog;
+    private string executionFilter = string.Empty;
+    private string functionName = string.Empty;
+
+    protected override async Task LoadDataAsync()
+    {
+        var token = AdminService.Token ?? string.Empty;
+
+        try
+        {
+            var func = await AdminService.FunctionsService.GetById(FunctionId, token);
+            functionName = func?.Name ?? FunctionId;
+        }
+        catch
+        {
+            functionName = FunctionId;
+        }
+
+        await LoadLogsAsync(token);
+    }
+
+    private async Task LoadLogsAsync(string token)
+    {
+        if (!string.IsNullOrEmpty(executionFilter))
+        {
+            logs = await AdminService.FunctionLogsService.GetByFunctionAndExecutionAsync(FunctionId, executionFilter, token);
+        }
+        else
+        {
+            logs = await AdminService.FunctionLogsService.GetByFunctionAsync(FunctionId, token);
+        }
+
+        logs = logs.OrderByDescending(l => l.CreatedAt).ToList();
+        selectedLog = null;
+    }
+
+    private async Task ApplyFilter()
+    {
+        await ExecuteWithErrorHandlingAsync(async () =>
+        {
+            IsInitialized = false;
+            StateHasChanged();
+            var token = AdminService.Token ?? string.Empty;
+            await LoadLogsAsync(token);
+            IsInitialized = true;
+        });
+    }
+
+    private async Task ClearFilter()
+    {
+        executionFilter = string.Empty;
+        await ApplyFilter();
+    }
+
+    private void FilterByExecution(string executionId)
+    {
+        executionFilter = executionId;
+        _ = ApplyFilter();
+    }
+
+    private async Task DeleteAllLogs()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, "Are you sure you want to delete ALL logs for this function?" }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialogRef = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete All Logs", parameters, options);
+        var result = await dialogRef.Result;
+        if (result?.Canceled == false)
+        {
+            await ExecuteWithErrorHandlingAsync(async () =>
+            {
+                var token = AdminService.Token ?? string.Empty;
+                var success = await AdminService.FunctionLogsService.DeleteByFunctionAsync(FunctionId, token);
+                if (success)
+                {
+                    ShowSuccess("All logs deleted successfully.");
+                    await LoadLogsAsync(token);
+                }
+                else
+                {
+                    ShowError("Failed to delete logs.");
+                }
+            });
+        }
+    }
+
+    private async Task DeleteExecutionLogs()
+    {
+        if (string.IsNullOrEmpty(executionFilter)) return;
+
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, $"Are you sure you want to delete all logs for execution '{executionFilter}'?" }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall };
+        var dialogRef = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete Execution Logs", parameters, options);
+        var result = await dialogRef.Result;
+        if (result?.Canceled == false)
+        {
+            await ExecuteWithErrorHandlingAsync(async () =>
+            {
+                var token = AdminService.Token ?? string.Empty;
+                var success = await AdminService.FunctionLogsService.DeleteByFunctionAndExecutionAsync(FunctionId, executionFilter, token);
+                if (success)
+                {
+                    ShowSuccess("Execution logs deleted successfully.");
+                    await LoadLogsAsync(token);
+                }
+                else
+                {
+                    ShowError("Failed to delete execution logs.");
+                }
+            });
+        }
+    }
+}

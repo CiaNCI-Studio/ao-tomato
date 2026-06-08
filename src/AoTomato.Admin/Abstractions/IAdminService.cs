@@ -9,6 +9,7 @@ public interface IAdminService
     event EventHandler<EventArgs> Updated;
     IUsersService UsersService {get;}
     IFunctionsService FunctionsService {get;}
+    IFunctionLogsService FunctionLogsService {get;}
     IVariablesService VariablesService {get;}
     ISettingsService SettingsService {get;}
     bool IsLoggedIn {get;}

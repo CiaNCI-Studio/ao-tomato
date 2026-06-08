@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using AoTomato.API.DependencyInjection;
+using AoTomato.API.Endpoints.FunctionLogs;
 using AoTomato.API.Endpoints.Functions;
 using AoTomato.API.Endpoints.Login;
 using AoTomato.API.Endpoints.Settings;
@@ -59,15 +60,16 @@ app.MapScalarApiReference("/docs");
 
 app.UseHttpsRedirection();
 app.AddCorsCofiguration();
-app.AddAuthentication();
-app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
+app.AddAuthentication();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseRouting();
 app.MapLoginEndpoints();
 app.MapUsersEndpoints();
 app.MapSettingsEndpoints();
 app.MapFunctionsEndpoints();
+app.MapFunctionLogsEndpoints();
 app.MapVariablesEndpoints();
 app.MapAoEndpoints();
 app.MapRazorPages();

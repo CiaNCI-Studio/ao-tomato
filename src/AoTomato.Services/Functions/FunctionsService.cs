@@ -15,18 +15,32 @@ using AoTomato.Services.Helpers;
 using AoTomato.Domain.Variables.Abstractions.Services;
 using AoTomato.Domain.Variables.Dtos;
 using Serilog;
+using AoTomato.Domain.FunctionLogs.Abstractions.Services;
+using AoTomato.Domain.FunctionLogs.Models;
+using AoTomato.domain.FunctionLogs.Dtos;
+using AoTomato.Domain.Helpers;
 
 public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsService
 {
     private readonly IFunctionsRepository functionsRepository;
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IVariablesService variablesService;
+    private readonly IFunctionLogsService functionLogsService;
 
-    public FunctionsService(IFunctionsRepository functionsRepository, IVariablesService variablesService, ILogger logger, IMapper mapper, IHttpClientFactory httpClientFactory) : base(functionsRepository, logger, mapper)
+    private string currentFunctionId = string.Empty;
+    private string currentExecutionId = string.Empty;
+
+    public FunctionsService(IFunctionsRepository functionsRepository,
+                            IVariablesService variablesService,
+                            IFunctionLogsService functionLogsService,
+                            ILogger logger,
+                            IMapper mapper,
+                            IHttpClientFactory httpClientFactory) : base(functionsRepository, logger, mapper)
     {
         this.functionsRepository = functionsRepository;
         this.httpClientFactory = httpClientFactory;
         this.variablesService = variablesService;
+        this.functionLogsService = functionLogsService;
     }
 
     public async Task<JsonDocument> ExecuteFunctionAsync(string routeKey,
@@ -43,6 +57,7 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
         if (!string.IsNullOrEmpty(function.ApiKey) && function.ApiKey != apiKey)
             throw new UnauthorizedAccessException("Invalid API key");
 
+        await StartFunctionExecutionLog(function, body, headers, queryParameters);
         using (var lua = new Lua())
         {
             lua.State.Encoding = Encoding.UTF8;
@@ -63,18 +78,23 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
             LuaHelpers.LoadJsonLibrary(lua);
             RegisterHttpLibrary(lua);
             RegisterVariablesLibrary(lua);
+            RegisterLogLibrary(lua);
             
             try
             {
                 lua.DoString(function.Code);
                 var responseTable = (LuaTable)lua["response"];
-                return LuaHelpers.LuaTableToJsonDocument(responseTable);
+                var responseJson = LuaHelpers.LuaTableToJsonDocument(responseTable);
+                await FinishFunctionExecutionLog(function, body, headers, queryParameters, responseJson.ToJsonString() ?? string.Empty);
+                return responseJson;
             }
             catch (NLua.Exceptions.LuaScriptException ex)
             {
+                await ErrorFunctionExecutionLog(function, body, headers, queryParameters, ex.Message);
                 throw new ApplicationException($"Lua execution error: {ex.Message}", ex);
             }
         }
+       
     }
 
     private static void InjectHeaders(Lua lua, Dictionary<string, string> headers)
@@ -177,6 +197,19 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
         });
     }
 
+     private void RegisterLogLibrary(Lua lua)
+    {
+        lua.NewTable("log");
+
+        var logTable = (LuaTable)lua["log"];
+        var factory = httpClientFactory;
+
+        logTable["write"] = new Action<LuaTable>(async logInfo =>
+        {
+            _ = CreateFunctionExecutionLog(logInfo["message"]?.ToString() ?? string.Empty, logInfo["body"]?.ToString() ?? string.Empty);
+        });
+    }
+
     private static string SerializeHeadersToJson(HttpResponseMessage response)
     {
         var allHeaders = new Dictionary<string, string>();
@@ -185,5 +218,77 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
         foreach (var h in response.Content.Headers)
             allHeaders[h.Key] = string.Join(", ", h.Value);
         return JsonSerializer.Serialize(allHeaders);
+    }
+
+    private async Task StartFunctionExecutionLog(Function function, 
+                                                    JsonDocument? body,
+                                                    Dictionary<string, string> headers,
+                                                    Dictionary<string, string> queryParameters)
+    {
+        currentExecutionId = Guid.NewGuid().ToString();
+        currentFunctionId = function.Id;
+        var functionLog = new FunctionLogDto
+        {
+          FunctionId = currentFunctionId,
+          ExecutionId = currentExecutionId,
+          Message = "Function execution Started by request.",
+          Body = body?.ToJsonString() ?? string.Empty,
+          Headers = "[" + string.Join(", ", headers.Select((item) => $"{{ 'Key' : {item.Key} : {item.Value} }}")) + "]",
+          QueryParameters = "[" + string.Join(", ", queryParameters.Select((item) => $"{{ 'Key' : {item.Key} : {item.Value} }}")) + "]"
+        };
+        await functionLogsService.CreateAsync(functionLog, null);
+    }
+
+    private async Task FinishFunctionExecutionLog(Function function, 
+                                                    JsonDocument? body,
+                                                    Dictionary<string, string> headers,
+                                                    Dictionary<string, string> queryParameters,
+                                                    string result)
+    {
+        var functionLog = new FunctionLogDto
+        {
+          FunctionId = currentFunctionId,
+          ExecutionId = currentExecutionId,
+          Message = "Function execution Finished",
+          Body = body?.ToString() ?? string.Empty,
+          Headers = "[" + string.Join(", ", headers.Select((item) => $"{{ 'Key' : {item.Key} : {item.Value} }}")) + "]",
+          QueryParameters = "[" + string.Join(", ", queryParameters.Select((item) => $"{{ 'Key' : {item.Key} : {item.Value} }}")) + "]",
+          Result = result
+        };
+        await functionLogsService.CreateAsync(functionLog, null);
+        currentExecutionId = string.Empty;
+        currentFunctionId = string.Empty;
+    }
+
+     private async Task ErrorFunctionExecutionLog(Function function, 
+                                                    JsonDocument? body,
+                                                    Dictionary<string, string> headers,
+                                                    Dictionary<string, string> queryParameters,
+                                                    string error)
+    {
+        var functionLog = new FunctionLogDto
+        {
+          FunctionId = currentFunctionId,
+          ExecutionId = currentExecutionId,
+          Message = "ERROR: " + error,
+          Body = body?.ToString() ?? string.Empty,
+          Headers = "[" + string.Join(", ", headers.Select((item) => $"{{ 'Key' : {item.Key} : {item.Value} }}")) + "]",
+          QueryParameters = "[" + string.Join(", ", queryParameters.Select((item) => $"{{ 'Key' : {item.Key} : {item.Value} }}")) + "]"
+        };
+        await functionLogsService.CreateAsync(functionLog, null);
+        currentFunctionId = string.Empty;
+        currentExecutionId = string.Empty;
+    }
+
+    private async Task CreateFunctionExecutionLog(string message, string body)
+    {
+        var functionLog = new FunctionLogDto
+        {
+          FunctionId = currentFunctionId,
+          ExecutionId = currentExecutionId,
+          Message = message,
+          Body = body
+        };
+        await functionLogsService.CreateAsync(functionLog, null);
     }
 }

@@ -6,7 +6,7 @@ public interface IServiceBase<TDto, TEntity>
     where TDto : class
     where TEntity : EntityBase, new()
 {
-    public Task<TDto> CreateAsync(TDto dto, LoggedUserDto loggedUser);
+    public Task<TDto> CreateAsync(TDto dto, LoggedUserDto? loggedUser);
 
     public Task<TDto> UpdateAsync(TDto dto, LoggedUserDto loggedUser);
 

@@ -26,6 +26,8 @@ public class AdminService : IAdminService
 
     public IFunctionsService FunctionsService {get; private set;}
 
+    public IFunctionLogsService FunctionLogsService {get; private set;}
+
     public IVariablesService VariablesService {get; private set;}
 
     public ISettingsService SettingsService {get; private set;}
@@ -38,6 +40,7 @@ public class AdminService : IAdminService
                         IUsersService usersService,
                         ISettingsService settingsService,
                         IFunctionsService functionsService,
+                        IFunctionLogsService functionLogsService,
                         IVariablesService variablesService,
                         NavigationManager navigationManager,
                         ILocalStorageService localStorageService)
@@ -45,6 +48,7 @@ public class AdminService : IAdminService
         UsersService = usersService;
         SettingsService = settingsService;
         FunctionsService = functionsService;
+        FunctionLogsService = functionLogsService;
         VariablesService = variablesService;
         this.loginService = loginService;
         this.navigationManager = navigationManager;

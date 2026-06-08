@@ -21,10 +21,10 @@ public class ServiceBase<TDto, TEntity> : IServiceBase<TDto, TEntity>
         this.logger = logger;
     }
 
-    public async Task<TDto> CreateAsync(TDto dto, LoggedUserDto loggedUser)
+    public async Task<TDto> CreateAsync(TDto dto, LoggedUserDto? loggedUser)
     {
         var entity = mapper.Map<TEntity>(dto);
-        entity = await repository.InsertAsync(entity, loggedUser.User.Id);
+        entity = await repository.InsertAsync(entity, loggedUser?.User?.Id ?? "system");
         return mapper.Map<TDto>(entity);
     }
 
