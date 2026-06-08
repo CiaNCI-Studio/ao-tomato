@@ -19,17 +19,4 @@
     <ProjectReference Include="../AoTomato.Services/AoTomato.Services.csproj" />
   </ItemGroup>
 
-  <Target Name="CopyBlazorWasmToPublish" AfterTargets="Publish">
-    <PropertyGroup>
-      <AdminWwwRoot>$(MSBuildProjectDirectory)\..\AoTomato.Admin\bin\$(Configuration)\net10.0\wwwroot</AdminWwwRoot>
-    </PropertyGroup>
-    <ItemGroup>
-      <BlazorFiles Include="$(AdminWwwRoot)\**\*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(BlazorFiles)"
-          DestinationFolder="$(PublishDir)wwwroot\%(RecursiveDir)"
-          SkipUnchangedFiles="false"
-          OverwriteReadOnlyFiles="true" />
-  </Target>
-
 </Project>

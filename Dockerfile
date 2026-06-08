@@ -4,7 +4,9 @@ WORKDIR /src
 COPY src/ ./
 
 RUN dotnet restore AoTomato.slnx
+RUN dotnet publish AoTomato.Admin/AoTomato.Admin.csproj -c Release -o /admin-publish
 RUN dotnet publish AoTomato.API/AoTomato.API.csproj -c Release -o /app
+RUN mkdir -p /app/wwwroot && cp -r /admin-publish/wwwroot/* /app/wwwroot/
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
