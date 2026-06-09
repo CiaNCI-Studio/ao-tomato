@@ -29,4 +29,9 @@ public class FunctionLogsRepository : RepositoryBase<FunctionLog>, IFunctionLogs
     {
         await Task.Run(() => collection.DeleteMany(item => item.FunctionId == functionId && item.ExecutionId == executionId));
     }
+
+    public async Task DeleteByDateAsync(DateTime beforeDate)
+    {
+        await Task.Run(() => collection.DeleteMany(item => item.CreatedAt <= beforeDate));
+    }
 }

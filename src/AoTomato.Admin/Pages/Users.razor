@@ -171,24 +171,11 @@ else
         {
             var token = AdminService.Token ?? string.Empty;
 
-            if (isNewUser)
+            var result = await AdminService.UsersService.Save(selectedUser, isNewUser, token);
+            if (result == null)
             {
-                var setupDto = new AoTomato.Domain.Login.Dtos.InitialSetupDto
-                {
-                    UserName = selectedUser.Username,
-                    UserEmail = selectedUser.Email,
-                    UserPassword = password
-                };
-                await AdminService.InitialSetupAsync(setupDto);
-            }
-            else
-            {
-                var result = await AdminService.UsersService.Save(selectedUser, false, token);
-                if (result == null)
-                {
-                    ShowError("Failed to save user.");
-                    return;
-                }
+                ShowError("Failed to save user.");
+                return;
             }
 
             ShowSuccess(isNewUser ? "User created successfully." : "User updated successfully.");

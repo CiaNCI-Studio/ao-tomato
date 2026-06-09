@@ -43,6 +43,22 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
         this.functionLogsService = functionLogsService;
     }
 
+    public async Task<IEnumerable<FunctionCron>> GetCronAsync()
+    {
+        return await functionsRepository.GetCronAsync(); 
+    }
+
+    public async Task ExecuteFunctionCronAsync(string functionId)
+    {
+        var function = await functionsRepository.GetByIdAsync(functionId);
+        
+        if (function == null)
+            throw new NotFoundException("Function not found");
+
+        await StartFunctionExecutionLog("Function execution Started by cron.", function, null, new Dictionary<string, string>(), new Dictionary<string, string>());
+        await ExecuteFunctionAsync(function);
+    }
+
     public async Task<JsonDocument> ExecuteFunctionAsync(string routeKey,
                                                    FunctionMethods method,
                                                    JsonDocument? body,
@@ -51,13 +67,25 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
                                                    string? apiKey = null)
     {
         var function = await functionsRepository.GetByRouteAndMethodAsync(routeKey, method);
+        
         if (function == null)
             throw new NotFoundException("Function not found");
 
         if (!string.IsNullOrEmpty(function.ApiKey) && function.ApiKey != apiKey)
             throw new UnauthorizedAccessException("Invalid API key");
 
-        await StartFunctionExecutionLog(function, body, headers, queryParameters);
+        await StartFunctionExecutionLog("Function execution Started by request.", function, body, headers, queryParameters);
+        return await ExecuteFunctionAsync(function, body, headers, queryParameters);
+
+    }
+
+    private async Task<JsonDocument> ExecuteFunctionAsync(Function function)
+    {
+        return await ExecuteFunctionAsync(function, null, new Dictionary<string, string>(), new Dictionary<string, string>());
+    }
+
+    private async Task<JsonDocument> ExecuteFunctionAsync(Function function, JsonDocument? body, Dictionary<string, string> headers, Dictionary<string, string> queryParameters)
+    {
         using (var lua = new Lua())
         {
             lua.State.Encoding = Encoding.UTF8;
@@ -69,7 +97,7 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
             lua["response.headers"] = LuaHelpers.NewLuaTable(lua);
 
             lua.NewTable("ctx");
-            lua["ctx.method"] = method.ToString().ToUpper();
+            lua["ctx.method"] = function.Method.ToString().ToUpper();
 
             InjectHeaders(lua, headers);
             InjectQueryParameters(lua, queryParameters);
@@ -79,7 +107,7 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
             RegisterHttpLibrary(lua);
             RegisterVariablesLibrary(lua);
             RegisterLogLibrary(lua);
-            
+
             try
             {
                 lua.DoString(function.Code);
@@ -94,7 +122,6 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
                 throw new ApplicationException($"Lua execution error: {ex.Message}", ex);
             }
         }
-       
     }
 
     private static void InjectHeaders(Lua lua, Dictionary<string, string> headers)
@@ -220,7 +247,8 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
         return JsonSerializer.Serialize(allHeaders);
     }
 
-    private async Task StartFunctionExecutionLog(Function function, 
+    private async Task StartFunctionExecutionLog(string message, 
+                                                    Function function, 
                                                     JsonDocument? body,
                                                     Dictionary<string, string> headers,
                                                     Dictionary<string, string> queryParameters)
@@ -231,7 +259,7 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
         {
           FunctionId = currentFunctionId,
           ExecutionId = currentExecutionId,
-          Message = "Function execution Started by request.",
+          Message = message,
           Body = body?.ToJsonString() ?? string.Empty,
           Headers = "[" + string.Join(", ", headers.Select((item) => $"{{ 'Key' : {item.Key} : {item.Value} }}")) + "]",
           QueryParameters = "[" + string.Join(", ", queryParameters.Select((item) => $"{{ 'Key' : {item.Key} : {item.Value} }}")) + "]"
@@ -291,4 +319,6 @@ public class FunctionsService : ServiceBase<FunctionDto, Function>, IFunctionsSe
         };
         await functionLogsService.CreateAsync(functionLog, null);
     }
+
+    
 }

@@ -38,4 +38,9 @@ public class FunctionLogsService : ServiceBase<FunctionLogDto, FunctionLog>, IFu
     {
          await functionLogsRepository.DeleteByFunctionAndExecutionAsync(functionId, executionId);
     }
+
+    public async Task DeleteByDateAsync(DateTime beforeDate)
+    {
+        await functionLogsRepository.DeleteByDateAsync(beforeDate);
+    }
 }

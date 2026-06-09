@@ -11,16 +11,16 @@ public class FunctionsRepository : RepositoryBase<Function>, IFunctionsRepositor
     {
     }
 
-    public Task<Function> GetByRouteAndMethodAsync(string routeKey, FunctionMethods method)
+    public async Task<Function?> GetByRouteAndMethodAsync(string routeKey, FunctionMethods method)
     {
-        return Task.Run(() =>
+        return await Task.Run(() =>
         {
             return collection.Find(item => item.Route == routeKey && item.Method == method).FirstOrDefault();
         });
     }
 
-    public async Task<IEnumerable<Function>> GetWithCronAsync()
+    public async Task<IEnumerable<FunctionCron>> GetCronAsync()
     {
-        return await Task.Run(() => collection.Find(item => !string.IsNullOrEmpty(item.Cron)));
+        return await Task.Run(() => collection.Find(item => !string.IsNullOrEmpty(item.Cron)).Select((item) => new FunctionCron {Id = item.Id, Cron = item.Cron}));
     }
 }

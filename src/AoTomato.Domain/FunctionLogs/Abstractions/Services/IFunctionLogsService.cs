@@ -10,4 +10,6 @@ public interface IFunctionLogsService : IServiceBase<FunctionLogDto, FunctionLog
     Task<List<FunctionLogDto>> GetByFunctionAndExecutionAsync(string functionId, string executionId);
     Task DeleteByFunctionAsync(string functionId);
     Task DeleteByFunctionAndExecutionAsync(string functionId, string executionId);
+    Task DeleteByDateAsync(DateTime beforeDate);
+
 }

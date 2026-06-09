@@ -9,4 +9,6 @@ using AoTomato.Domain.Functions.Models;
 public interface IFunctionsService : IServiceBase<FunctionDto, Function>
 {
     Task<JsonDocument> ExecuteFunctionAsync(string routeKey, FunctionMethods method, JsonDocument? body, Dictionary<string, string> headers, Dictionary<string, string> queryParameters, string? apiKey = null);
+    Task ExecuteFunctionCronAsync(string functionId);
+    Task<IEnumerable<FunctionCron>> GetCronAsync();
 }

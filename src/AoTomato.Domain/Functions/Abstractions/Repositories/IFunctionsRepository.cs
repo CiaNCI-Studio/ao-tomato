@@ -6,6 +6,6 @@ using AoTomato.Domain.Functions.Models;
 
 public interface IFunctionsRepository : IRepositoryBase<Function>
 {
-    Task<Function> GetByRouteAndMethodAsync(string routeKey, FunctionMethods method);
-    Task<IEnumerable<Function>> GetWithCronAsync();
+    Task<Function?> GetByRouteAndMethodAsync(string routeKey, FunctionMethods method);
+    Task<IEnumerable<FunctionCron>> GetCronAsync();
 }

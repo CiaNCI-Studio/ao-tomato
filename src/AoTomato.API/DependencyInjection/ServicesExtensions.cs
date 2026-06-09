@@ -1,6 +1,7 @@
 namespace AoTomato.API.DependencyInjection;
 
 using AoTomato.API.Helpers;
+using AoTomato.API.Workers;
 using AoTomato.domain.Login.Models;
 using AoTomato.Domain.Common.Models;
 using AoTomato.Domain.FunctionLogs.Abstractions.Repositories;
@@ -42,6 +43,8 @@ public static class ServicesExtensions
         services.AddScoped<ISettingsService, SettingsService>();
         services.AddScoped<IUsersService, UsersService>();
         services.AddScoped<IVariablesService, VariableService>();
+        services.AddHostedService<FunctionsWorker>();
+        services.AddHostedService<FunctionLogsWorker>();
     }
     
     public static void AddRepositories(this IServiceCollection services)

@@ -48,11 +48,31 @@ else
                               Variant="Variant.Outlined"
                               Margin="Margin.Dense"
                               id="input-function-apikey" />
+
+                <MudTextField @bind-Value="functionUrl"
+                              Label="Url"
+                              Variant="Variant.Outlined"
+                              ReadOnly=true
+                              Margin="Margin.Dense"
+                              id="input-function-url" />
+
+
                 <MudTextField @bind-Value="functionDto.Cron"
                               Label="Cron Expression"
                               Variant="Variant.Outlined"
                               Margin="Margin.Dense"
+                              Immediate="true"
+                              OnBlur="OnCronBlurred"
+                              OnKeyUp="OnCronBlurred"
                               id="input-function-cron" />
+                @if (!string.IsNullOrEmpty(cronValidation))
+                {
+                    <MudText Typo="Typo.caption"
+                             Color="@(isCronValid ? Color.Success : Color.Error)"
+                             Class="mt-1 ml-1">
+                        @cronValidation
+                    </MudText>
+                }
             </MudForm>
 
             <MudText Typo="Typo.h6" Class="mt-4 mb-2">Code</MudText>
@@ -172,6 +192,14 @@ log.write({
                            id="btn-copy-function-url">
                     Copy URL
                 </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Info"
+                           OnClick="DownloadAIContext"
+                           StartIcon="@Icons.Material.Filled.Download"
+                           Class="mr-2"
+                           id="btn-download-ai-guide">
+                    AI Guide
+                </MudButton>
                 @if (!isNew)
                 {
                     <MudButton Variant="Variant.Filled"
@@ -220,6 +248,9 @@ log.write({
     private bool isNew = true;
     private bool isFormValid;
     private bool isSaving;
+    private string cronValidation = string.Empty;
+    private bool isCronValid = true;
+    private String functionUrl { get => GetFunctionUrl(); set => _ = value; }
 
     private Func<StandaloneCodeEditor, StandaloneEditorConstructionOptions> ConstructionOptions => editor =>
         new StandaloneEditorConstructionOptions
@@ -343,17 +374,78 @@ log.write({
 
     private async Task CopyFunctionUrl()
     {
+        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", GetFunctionUrl());
+        ShowSuccess("Function URL copied to clipboard.");
+    }
+
+
+    private string GetFunctionUrl()
+    {
         var url = $"{NavigationManager.BaseUri}ao/{functionDto.Route}";
         if (!string.IsNullOrEmpty(functionDto.ApiKey))
         {
             url += $"?api_key={functionDto.ApiKey}";
         }
-        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", url);
-        ShowSuccess("Function URL copied to clipboard.");
+        return url;
+    }
+
+    private async Task DownloadAIContext()
+    {
+        await JsRuntime.InvokeVoidAsync("eval", @"
+            fetch('/ai-function-guide.md')
+                .then(r => r.blob())
+                .then(b => {
+                    var u = URL.createObjectURL(b);
+                    var a = document.createElement('a');
+                    a.href = u;
+                    a.download = 'ao-tomato-ai-function-guide.md';
+                    document.body.appendChild(a);
+                    a.click();
+                    URL.revokeObjectURL(u);
+                    document.body.removeChild(a);
+                });
+        ");
     }
 
     private void Cancel()
     {
         NavigationManager.NavigateTo("/functions");
+    }
+
+    private void OnCronBlurred()
+    {
+        ValidateCron();
+    }
+
+    private void ValidateCron()
+    {
+        var cron = functionDto.Cron?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(cron))
+        {
+            isCronValid = true;
+            cronValidation = string.Empty;
+            return;
+        }
+
+        try
+        {
+            CronExpression.Parse(cron, CronFormat.IncludeSeconds);
+        }
+        catch (CronFormatException)
+        {
+            try
+            {
+                CronExpression.Parse(cron);
+            }
+            catch (CronFormatException)
+            {
+                isCronValid = false;
+                cronValidation = "Invalid cron expression";
+                return;
+            }
+        }
+
+        isCronValid = true;
+        cronValidation = "Valid cron expression";
     }
 }

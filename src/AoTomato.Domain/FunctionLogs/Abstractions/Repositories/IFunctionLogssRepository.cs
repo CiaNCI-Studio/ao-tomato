@@ -9,4 +9,5 @@ public interface IFunctionLogssRepository : IRepositoryBase<FunctionLog>
     Task<List<FunctionLog>> GetByFunctionAndExecutionAsync(string functionId, string executionId);
     Task DeleteByFunctionAsync(string functionId);
     Task DeleteByFunctionAndExecutionAsync(string functionId, string executionId);
+    Task DeleteByDateAsync(DateTime beforeDate);
 }
