@@ -39,7 +39,7 @@ builder.Services.SetServiceProviderHelper();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
-    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
 });
 
 

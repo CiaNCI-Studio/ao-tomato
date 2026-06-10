@@ -78,14 +78,15 @@ public static class ServicesExtensions
     public static WebApplicationBuilder AddConfiguration<T>(this WebApplicationBuilder builder)
         where T : class, new()
     {
-        if (builder.Configuration.GetSection(typeof(T).Name).Value == null || builder.Configuration.GetSection(typeof(T).Name).GetChildren().Count() == 0)
+        var section = builder.Configuration.GetSection(typeof(T).Name);
+        if (!section.Exists())
         {
-            builder.Services.AddSingleton(s =>new DbSettings());
+            builder.Services.AddSingleton(s => new T());
         }
         else
         {
-            var settings = new DbSettings();
-            builder.Configuration.Bind(typeof(DbSettings).Name, settings);
+            var settings = new T();
+            section.Bind(settings);
             builder.Services.AddSingleton(settings);
         }
         return builder;
